@@ -41,18 +41,28 @@ mean_by_year = df_mean_metric
 
 # get groupings
 positive <- c(1, 8, 18, 22)
-negative <- c(1,3, 10, 16)
+negative <- c(1, 3, 10, 16)
 
 pos_mean_by_year <- mean_by_year[positive]
 neg_mean_by_year <- mean_by_year[negative]
 
 # aggregate decades
-
-
+mean_decade <- c()
+for (x in 1:(nrow(mean_by_year)/10)) {
+  index <- 10*(x-1)
+  print(index)
+  get_row <- mean_by_year[(index+1):(index+10),]
+  print(get_row)
+  new_row <- c(paste(c(1950+index, 's'), collapse = ''), colMeans(get_row)[-1])
+  mean_decade <- rbind(mean_decade, new_row)
+}
+df_mean_decade <- as.data.frame(mean_decade, row.names = NULL, optional = TRUE)
+colnames(df_mean_decade)[1] <- 'decade'
+mean_by_decade <- df_mean_decade[-c(2, 4, 5, 6, 7, 9, 11, 12, 13, 14, 15, 17, 21, 24)]
 
 ### Graphing ###
 
-# area plot by year --------------------------
+# area plot by year ------------------------------------
 
 # colors_metric <- viridis::turbo(length(metric))
 # 
@@ -92,8 +102,23 @@ neg_mean_by_year <- mean_by_year[negative]
 # legend(1990, 0.3, legend = unique(pos_reshape$variable), col = unique(pos_cols), pch = 16, cex = 0.7)
 
 
-# defining characteristics by decade
+# defining characteristics by decade --------------------
+cols_decade <- viridis::viridis(ncol(mean_by_decade[-1]))
 
+decade_reshape <- mean_by_decade %>%
+  select(all_of(colnames(mean_by_decade))) %>%
+  gather(key = "variable", value = "value", -decade)
+decade_reshape$value <- as.numeric(decade_reshape$value)
+
+ggplot(data = decade_reshape, aes(x = decade, y = value, fill = variable, label = '')) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  scale_fill_viridis_d() +
+  labs(x = 'Decade', y = 'Aggregate Proportion', title =
+         'Average Topic Frequencies in Pop Music by Decade', fill = 'Topic') +
+  geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(plot.title = element_text(hjust = 0.5))
+  
 
 
 
